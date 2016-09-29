@@ -15,8 +15,8 @@
     
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
+    
     self = [super init];
     if (self) {
         
@@ -25,6 +25,7 @@
         
     }
     return self;
+    
 }
 
 - (void)loadDataForAPIParams:(NSString *)params {

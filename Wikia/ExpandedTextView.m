@@ -9,7 +9,7 @@
 #import "ExpandedTextView.h"
 
 @implementation ExpandedTextView {
-
+    
     BOOL isExpanded;
     
     NSString *textShort;
@@ -28,39 +28,20 @@
     
 }
 
-- (void) initLongPress {
-    
-    for (UIGestureRecognizer *recognizer in self.gestureRecognizers) {
-        if ([recognizer isKindOfClass:[UILongPressGestureRecognizer class]]){
-            recognizer.enabled = NO;
-        }
-    }
-    
-    longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(didLongPress)];
-    [self addGestureRecognizer:longPressRecognizer];
-    
-}
+# pragma mark - CONTENT
 
-- (void) didLongPress {
-    
-    if (longPressRecognizer.state == UIControlEventTouchDown){
-        [self expandText:!isExpanded];
-    }
-    
-}
-
-- (void) setTextContent:(NSString *)textContent {
+- (void)setTextContent:(NSString *)textContent {
     
     textLong = textContent;
     textShort = [self getShortString:textContent];
     isExpanded = NO;
-    self.text = textShort;
+    self.text = textLong;
     
 }
 
 - (void)expandText:(BOOL)expand {
     
-    if (expand && textLong){
+    if (expand && textLong) {
         self.text = textLong;
         isExpanded = YES;
     } else {
@@ -70,12 +51,37 @@
     
 }
 
+# pragma mark - LONG PRESS GESTURE
+
+- (void)initLongPress {
+    
+    for (UIGestureRecognizer *recognizer in self.gestureRecognizers) {
+        if ([recognizer isKindOfClass:[UILongPressGestureRecognizer class]]) {
+            recognizer.enabled = NO;
+        }
+    }
+    
+    longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(didLongPress)];
+    [self addGestureRecognizer:longPressRecognizer];
+    
+}
+
+- (void)didLongPress {
+    
+    if (longPressRecognizer.state == UIControlEventTouchDown) {
+        [self expandText:!isExpanded];
+    }
+    
+}
+
+# pragma mark - UTILS
+
 - (NSString*)getShortString:(NSString *)longString {
     
     NSInteger shortMaxLen = 100;
     NSString *shortString;
     
-    if (longString.length > shortMaxLen){
+    if (longString.length > shortMaxLen) {
         shortString = [longString substringToIndex: shortMaxLen];
         NSRange space = [shortString rangeOfString:@" " options:NSBackwardsSearch];
         shortString = [shortString substringToIndex:space.location];
@@ -87,6 +93,5 @@
     return shortString;
     
 }
-
 
 @end

@@ -10,7 +10,7 @@
 
 @implementation FavBarButton {
     
-BOOL _isFav;
+    BOOL _isFav;
 
 }
 
@@ -24,7 +24,7 @@ BOOL _isFav;
     
     _isFav = fav;
     
-    if (fav){
+    if (fav) {
         self.image = [UIImage imageNamed:@"favBarOn"];
     } else {
         self.image = [UIImage imageNamed:@"favBarOff"];
