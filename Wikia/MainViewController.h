@@ -7,18 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "MainViewModel.h"
-#import "DetailViewController.h"
-#import "ThumbCell.h"
-#import "FavButton.h"
-#import "Shared.h"
+#import "FavBarButton.h"
 
 @interface MainViewController : UICollectionViewController <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
 
-@property (weak, nonatomic) IBOutlet UIBarButtonItem *favBarButton;
+@property (weak, nonatomic) IBOutlet FavBarButton *favBarButton;
 
 - (IBAction)fav:(id)sender;
 - (IBAction)favFilter:(id)sender;
 
 @end
-

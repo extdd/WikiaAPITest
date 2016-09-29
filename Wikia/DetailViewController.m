@@ -7,10 +7,7 @@
 //
 
 #import "DetailViewController.h"
-
-@interface DetailViewController ()
-
-@end
+#import "Shared.h"
 
 @implementation DetailViewController
 
@@ -20,7 +17,7 @@
     
     [self.textView setTextContent:self.abstract];
     
-    self.favButton.fav = self.isFav;
+    self.favButton.isFav = self.isFav;
     self.headerLabel.text = self.characterTitle;
     self.imageView.image = [UIImage imageWithData:self.thumbData];
     self.imageView.layer.borderWidth = 1.0f;
@@ -31,8 +28,8 @@
 - (IBAction)fav:(id)sender {
     
     FavButton *favButton = (FavButton *)sender;
-    favButton.fav = !favButton.fav;
-    self.isFav = favButton.fav;
+    favButton.isFav = !favButton.isFav;
+    self.isFav = favButton.isFav;
     
     [[NSNotificationCenter defaultCenter] postNotificationName:DetailFavChangeNotification object:favButton];
 

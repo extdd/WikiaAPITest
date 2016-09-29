@@ -10,7 +10,7 @@
 
 @implementation ThumbCell
 
-- (void) awakeFromNib {
+- (void)awakeFromNib {
     
     [super awakeFromNib];
  

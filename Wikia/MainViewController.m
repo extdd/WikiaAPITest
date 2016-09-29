@@ -7,19 +7,25 @@
 //
 
 #import "MainViewController.h"
+#import "MainViewModel.h"
+#import "DetailViewController.h"
+#import "ThumbCell.h"
+#import "FavButton.h"
+#import "Shared.h"
 
 @implementation MainViewController {
     
     MainViewModel *mainViewModel;
-    
-    CGFloat cols;
-    CGFloat padding;
-    CGFloat cellWidth;
-    CGFloat cellHeight;
-    UILabel *favInfoLabel;
-    NSIndexPath *activeIndexPath;
-    int activeCharacterIndex;
+
+    int colsNum; //number of columns in collection view
+    int selectedCharacterIndex;
     BOOL isFavFilter;
+    
+    CGFloat spacing; //one value for cells spacing, lines spacing & insets
+    CGFloat cellWidth; //calculated by screen size, colsNum & spacing
+    CGFloat cellHeight; //calculated by screen size, colsNum & spacing
+    NSIndexPath *selectedCellIndexPath;
+    UILabel *favInfoLabel;
     
 }
 
@@ -28,6 +34,7 @@
     [super viewDidLoad];
     
     isFavFilter = NO;
+    spacing = 8.0f;
     
     self.collectionView.delegate = self;
     self.collectionView.dataSource = self;
@@ -35,8 +42,8 @@
     [self initUI];
     [self updateLayout:self.view.frame.size];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didDataLoad:) name:DataLoadCompleteNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didDetailFavChange:) name:DetailFavChangeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didLoadData:) name:DataLoadCompleteNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangeDetailFav:) name:DetailFavChangeNotification object:nil];
 
     mainViewModel = [[MainViewModel alloc] init];
     
@@ -48,14 +55,13 @@
     
 }
 
-- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator{
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
     
     [self updateLayout:size];
     
 }
 
-# pragma mark -
-# pragma mark DATA SOURCE
+# pragma mark - DATA SOURCE
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
     
@@ -67,7 +73,7 @@
     
     NSUInteger count = mainViewModel.collectionData.count;
     
-    if (count < 1 && isFavFilter){
+    if (count < 1 && isFavFilter) {
         favInfoLabel.hidden = NO;
     } else {
         favInfoLabel.hidden = YES;
@@ -79,54 +85,50 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    ThumbCell *cell = (ThumbCell *) [collectionView dequeueReusableCellWithReuseIdentifier:@"thumbCell" forIndexPath:indexPath];
+    ThumbCell *cell = (ThumbCell *)[collectionView dequeueReusableCellWithReuseIdentifier:@"thumbCell" forIndexPath:indexPath];
+    FavButton *favButton = (FavButton *)cell.favButton;
     
     int characterIndex = [mainViewModel.collectionData[indexPath.item] intValue];
     NSData *thumbData = mainViewModel.characters[characterIndex].thumbData;
 
-    if (thumbData){
+    if (thumbData) {
         
         cell.imageView.image = [[UIImage alloc] initWithData:thumbData];
         
     } else {
         
         [mainViewModel loadThumbImageForCharacterIndex:(int)characterIndex complete:^(BOOL success) {
-            if (success){
-
-                if (cell){
-                    cell.imageView.image = [[UIImage alloc] initWithData:mainViewModel.characters[characterIndex].thumbData];
-                }
+            if (success && cell) {
+                cell.imageView.image = [[UIImage alloc] initWithData:mainViewModel.characters[characterIndex].thumbData];
             }
         }];
         
     }
     
     cell.label.text = mainViewModel.characters[characterIndex].title;
-    [(FavButton *)cell.favButton setFav:mainViewModel.characters[characterIndex].isFav];
+    favButton.isFav = mainViewModel.characters[characterIndex].isFav;
     
     return cell;
     
 }
 
-# pragma mark -
-# pragma mark DELEGATE
+# pragma mark - DELEGATE
 
 - (void)collectionView:(UICollectionView *)collectionView didHighlightItemAtIndexPath:(nonnull NSIndexPath *)indexPath {
     
     ThumbCell *cell = (ThumbCell*)[collectionView cellForItemAtIndexPath:indexPath];
-    cell.imageView.alpha = 0.5;
+    cell.imageView.alpha = 0.5f;
     
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didUnhighlightItemAtIndexPath:(nonnull NSIndexPath *)indexPath {
     
     ThumbCell *cell = (ThumbCell*)[collectionView cellForItemAtIndexPath:indexPath];
-    cell.imageView.alpha = 1;
+    cell.imageView.alpha = 1.0f;
     
 }
 
-# pragma mark -
-# pragma mark LAYOUT
+# pragma mark - LAYOUT
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
 
@@ -138,37 +140,30 @@
     
     BOOL isPortrait = UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation]);
     
-    CGFloat paddingTop;
-    
     if (isPortrait) {
-        cols = 3;
-        paddingTop = 64;
+        colsNum = 3;
     } else {
-        cols = 5;
-        paddingTop = 32;
+        colsNum = 5;
     }
     
-    UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *) self.collectionViewLayout;
+    UICollectionViewFlowLayout *layout = (UICollectionViewFlowLayout *)self.collectionViewLayout;
     
-    padding = layout.sectionInset.left;
-    cellWidth = floor((size.width - padding*(cols+1))/cols);
+    layout.sectionInset = UIEdgeInsetsMake(spacing, spacing, spacing, spacing);
+    layout.minimumLineSpacing = spacing;
+    layout.minimumInteritemSpacing = spacing;
+    
+    cellWidth = floor((size.width - spacing*(colsNum+1))/colsNum);
     cellHeight = floor(cellWidth * 1.2);
-    
-    CGFloat favInfoLabelW = 300;
-    CGFloat favInfoLabelH = 50;
-    
-    favInfoLabel.frame = CGRectMake(size.width/2 - favInfoLabelW/2, paddingTop, favInfoLabelW, favInfoLabelH);
-    favInfoLabel.textAlignment = NSTextAlignmentCenter;
+    favInfoLabel.center = CGPointMake(floor(size.width/2), floor(favInfoLabel.frame.size.height/2) + 14);
 
     [self.collectionView.collectionViewLayout invalidateLayout];
     
 }
 
-# pragma mark -
-# pragma mark SEGUE
+# pragma mark - SEGUE
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    
+
     if ([segue.identifier isEqualToString:@"showDetails"]){
         
         UICollectionViewCell *cell = (UICollectionViewCell *)sender;
@@ -185,82 +180,81 @@
         detailViewController.thumbData = mainViewModel.characters[index].thumbData;
         detailViewController.isFav = mainViewModel.characters[index].isFav;
         
-        activeIndexPath = indexPath;
-        activeCharacterIndex = index;
+        selectedCellIndexPath = indexPath;
+        selectedCharacterIndex = index;
 
     }
     
 }
 
-# pragma mark -
-# pragma mark NOTIFICATIONS
+# pragma mark - NOTIFICATIONS
 
-- (void) didDataLoad:(NSNotification *)notification {
+- (void) didLoadData:(NSNotification *)notification {
     
     [self.collectionView reloadData];
     
 }
 
-- (void) didDetailFavChange:(NSNotification *)notification {
+- (void) didChangeDetailFav:(NSNotification *)notification {
     
-    BOOL isFav = [(FavButton *)notification.object fav];
-    mainViewModel.characters[activeCharacterIndex].isFav = isFav;
+    BOOL isFav = [(FavButton *)notification.object isFav];
+    mainViewModel.characters[selectedCharacterIndex].isFav = isFav;
     
-    ThumbCell *cell = (ThumbCell *)[self.collectionView cellForItemAtIndexPath:activeIndexPath];
-    FavButton *cellFavButton = (FavButton *) cell.favButton;
-    cellFavButton.fav = isFav;
+    ThumbCell *cell = (ThumbCell *)[self.collectionView cellForItemAtIndexPath:selectedCellIndexPath];
+    FavButton *favButton = (FavButton *)cell.favButton;
+    favButton.isFav = isFav;
 
-    if (isFavFilter){
+    if (isFavFilter) {
         [mainViewModel favFilter:YES];
         [self.collectionView reloadData];
     }
   
 }
 
-# pragma mark -
-# pragma mark ACTIONS
+# pragma mark - ACTIONS
 
-- (IBAction)fav:(id)sender {
-    
+- (IBAction)fav:(id)sender { //action for the favButton (star) in cell
+
     FavButton *favButton = (FavButton *)sender;
     ThumbCell *cell = (ThumbCell *)[[favButton superview] superview];
     NSIndexPath *indexPath = [self.collectionView indexPathForCell:cell];
     int index = [mainViewModel.collectionData[indexPath.item] intValue];
     
-    favButton.fav = !favButton.fav;
-    mainViewModel.characters[index].isFav = favButton.fav;
+    favButton.isFav = !favButton.isFav;
+    mainViewModel.characters[index].isFav = favButton.isFav;
     
-    if (isFavFilter){
+    if (isFavFilter) {
         [mainViewModel favFilter:YES];
         [self.collectionView reloadData];
     }
     
 }
 
-# pragma mark -
-# pragma mark UI
-
-- (IBAction)favFilter:(id)sender {
+- (IBAction)favFilter:(id)sender { //action for the favBarButton (star) in navigation bar
     
     isFavFilter = !isFavFilter;
     [mainViewModel favFilter:isFavFilter];
-
-    if (isFavFilter){
-        self.favBarButton.image = [UIImage imageNamed:@"favBarOn"];
-    } else {
-        self.favBarButton.image = [UIImage imageNamed:@"favBarOff"];
-    }
-    
+    self.favBarButton.isFav = isFavFilter;
     [self.collectionView reloadData];
     
 }
+
+# pragma mark - UI
 
 - (void)initUI {
     
     favInfoLabel = [[UILabel alloc] init];
     favInfoLabel.text = @"No favourites :(";
     favInfoLabel.hidden = true;
-    [self.view addSubview:favInfoLabel];
+    favInfoLabel.textAlignment = NSTextAlignmentCenter;
+    [favInfoLabel sizeToFit];
+
+    favInfoLabel.frame = CGRectMake(favInfoLabel.frame.origin.x,
+                                    favInfoLabel.frame.origin.y,
+                                    ceil(favInfoLabel.frame.size.width),
+                                    ceil(favInfoLabel.frame.size.height));
+    
+    [self.collectionView addSubview:favInfoLabel];
     
 }
 

@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "ExpandedTextView.h"
 #import "FavButton.h"
-#import "Shared.h"
 
 @interface DetailViewController : UIViewController
 

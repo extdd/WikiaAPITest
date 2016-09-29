@@ -8,9 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import "Networking.h"
 #import "Character.h"
-#import "Shared.h"
 
 @interface MainViewModel : NSObject
 

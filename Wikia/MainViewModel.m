@@ -7,6 +7,8 @@
 //
 
 #import "MainViewModel.h"
+#import "Networking.h"
+#import "Shared.h"
 
 @implementation MainViewModel {
     
@@ -14,7 +16,8 @@
     
     NSString *apiParams;
     NSString *category;
-    int limit;
+    
+    int limit; //number of results
     
 }
 
@@ -27,7 +30,7 @@
         networking = [[Networking alloc] init];
         category = @"Characters";
         limit = 75;
-        apiParams = [NSString stringWithFormat:@"Articles/Top?expand=1&category=%@&limit=%@&abstract=500",category, [NSString stringWithFormat:@"%i", limit]];
+        apiParams = [NSString stringWithFormat:@"Articles/Top?expand=1&category=%@&limit=%@&abstract=500", category, [NSString stringWithFormat:@"%i", limit]];
 
         [self initData];
         
@@ -37,30 +40,7 @@
     
 }
 
-- (void)favFilter:(BOOL)isFav {
-    
-    if (isFav){
-        
-        Character *character;
-        self.favIndexes = [[NSMutableArray alloc] init];
-        
-        for (character in self.characters){
-
-            if (character.isFav){
-                [self.favIndexes addObject:[NSNumber numberWithInt:character.index]];
-            }
-            
-        }
-
-        self.collectionData = self.favIndexes;
-        
-    } else {
-        
-        self.collectionData = self.allIndexes;
-        
-    }
-    
-}
+# pragma mark - DATA
 
 - (void)initData {
     
@@ -69,20 +49,20 @@
     self.allIndexes = [[NSMutableArray alloc] init];
     self.favIndexes = [[NSMutableArray alloc] init];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didJSONLoad:) name:JSONLoadCompleteNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didLoadJSON:) name:JSONLoadCompleteNotification object:nil];
     [networking loadDataForAPIParams:apiParams];
     
 }
 
-- (void)didJSONLoad:(NSNotification *)notification {
+- (void)didLoadJSON:(NSNotification *)notification {
     
-    NSDictionary *json = (NSDictionary *) notification.object;
+    NSDictionary *json = (NSDictionary *)notification.object;
     NSArray *items = (NSArray *) [json objectForKey:@"items"];
     NSDictionary *item;
     
     int index = 0;
     
-    for (item in items){
+    for (item in items) {
         [self initCharacter:item withIndex:index];
         [self.allIndexes addObject:[NSNumber numberWithInt:index]];
         index++;
@@ -99,7 +79,6 @@
     
     Character *character = [[Character alloc] init];
     character.index = index;
-    character.uniqueId = [data valueForKey:@"id"];
     character.title = [data valueForKey:@"title"];
     character.abstract = [data valueForKey:@"abstract"];
     character.thumbURL = [data valueForKey:@"thumbnail"];
@@ -108,6 +87,33 @@
     [self.characters addObject:character];
     
 }
+
+# pragma mark - FAV FILTER
+
+- (void)favFilter:(BOOL)isFav {
+    
+    if (isFav) {
+        
+        Character *character;
+        self.favIndexes = [[NSMutableArray alloc] init];
+        
+        for (character in self.characters) {
+            if (character.isFav){
+                [self.favIndexes addObject:[NSNumber numberWithInt:character.index]];
+            }
+        }
+        
+        self.collectionData = self.favIndexes;
+        
+    } else {
+        
+        self.collectionData = self.allIndexes;
+        
+    }
+    
+}
+
+# pragma mark - THUMB IMAGE LOADING
 
 - (void)loadThumbImageForCharacterIndex:(int)characterIndex complete:(void (^)(BOOL success))complete {
  

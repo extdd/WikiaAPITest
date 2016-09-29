@@ -10,12 +10,11 @@
 
 @interface Character : NSObject
 
-@property NSString *uniqueId;
-@property NSString *title;
-@property NSString *abstract;
-@property NSString *pageURL;
-@property NSString *thumbURL;
-@property NSData *thumbData;
+@property (strong, nonatomic) NSString *title;
+@property (strong, nonatomic) NSString *abstract;
+@property (strong, nonatomic) NSString *pageURL;
+@property (strong, nonatomic) NSString *thumbURL;
+@property (strong, nonatomic) NSData *thumbData;
 
 @property int index;
 @property BOOL isFav;

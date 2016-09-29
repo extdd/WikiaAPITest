@@ -10,21 +10,21 @@
 
 @implementation FavButton {
     
-    BOOL _fav;
+    BOOL _isFav;
     
 }
 
-- (BOOL)fav {
+- (BOOL)isFav {
     
-    return _fav;
+    return _isFav;
     
 }
 
-- (void)setFav:(BOOL)newFav {
+- (void)setIsFav:(BOOL)fav {
     
-    _fav = newFav;
+    _isFav = fav;
     
-    if (_fav){
+    if (fav) {
         [self setImage:[UIImage imageNamed:@"favOn"] forState:UIControlStateNormal];
     } else {
         [self setImage:[UIImage imageNamed:@"favOff"] forState:UIControlStateNormal];
